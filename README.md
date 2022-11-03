@@ -1,4 +1,8 @@
-## Clean Architectures
+
+<p align="center" style="font-size : 45px">
+<strong>Clean Architectures</strong>
+</p>
+
 > 클린아키텍쳐를 공부해서 깔끔한 코드를 짜보자!
 
 ## 🔧 기술 스택 (Technique Used)
@@ -6,12 +10,12 @@
 
 ## 📖 교재
 
-- **클린 아키텍처** - 로버트 C. 마틴
+<img src="https://user-images.githubusercontent.com/81157873/199762036-e8f7ac61-0e2c-4d31-880a-594520dae4a6.png" width="200" />
 
-![image](https://user-images.githubusercontent.com/81157873/199762036-e8f7ac61-0e2c-4d31-880a-594520dae4a6.png)
+- **클린 아키텍처** ... 로버트 C. 마틴
 
-##🤸 ‍진행방식
-- 매주 GitHub에서 무작위로 bad-practice 코드 예제를 골라 리팩터링합니다. 
+## 🤸 ‍진행방식
+- 매주 GitHub에서 무작위로 *bad practice* 코드 예제를 골라 리팩터링합니다. 
 
 ## 👨‍💻 스터디원
 <table>
