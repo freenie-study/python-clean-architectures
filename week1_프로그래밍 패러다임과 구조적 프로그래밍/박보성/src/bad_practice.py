@@ -135,18 +135,11 @@ waiting = dict_user[4]
 keywords = dict_user[5]
 
 
-# 유저 데이터프레임 생성
-def makeUserDF():
     user = pd.DataFrame(
         {'ID': ['user'] * len(cart_result), 'novelindex': [0] * len(cart_result), '평점': [0] * len(cart_result)})
     for i in range(len(cart_result)):
         user['novelindex'][i] = cart_result[i]['index']
         user['평점'][i] = cart_result[i]['rating']
-    return user
-
-
-## 1. 성인, 완결 필터링
-def filtering():
     a = []  # 리뷰에서도 작품을 제외하기 위한 list -> 이 안의 작품들은 리뷰에서 지워짐
     f = []
 
@@ -166,41 +159,31 @@ def filtering():
     review_new = review.drop(idx_del_review)
     novel_new = novel.drop(idx_del_novel)
 
-    return review_new, novel_new
+    cos = np.array(cos)
 
-
-## 2. CB
-def recommended_wn_each(title, novel_new):
-    recommended_wn = []
-    indices = pd.Series(novel['제목'])
-
-    idx = indices[indices == title].index[0]
-    score_google = pd.Series(cos[idx]).iloc[novel_new.index].sort_values(ascending=False)
-    score_google = score_google.iloc[novel_new.index]
-    top_10_indices = score_google.iloc[2:11].index
-
-    for i in top_10_indices:
-        recommended_wn.append(novel_new['제목'][i])
-
-    return recommended_wn
-
-
-def cb_recommend_all(index, novel_new):
-    topn = []
-    title_list = list(novel_new['제목'].iloc[index])
-    for i in title_list:
-        for j in recommended_wn_each(i, novel_new):
-            topn.append(j)
-    return list(set(topn))
-
-
-def top_10(index, novel_new):
     waiting = dict_user[4]
     keywords = dict_user[5]
 
     cb = 0
     scaler = MinMaxScaler()
-    list_topn = cb_recommend_all(index, novel_new)
+
+    topn = []
+    title_list = list(novel_new['제목'].iloc[user['novelindex']])
+
+    for i in title_list:
+        recommended_wn = []
+        indices = pd.Series(novel['제목'])
+
+        idx = indices[indices == i].index[0]
+        score_google = pd.Series(cos[idx]).iloc[novel_new.index].sort_values(ascending=False)
+        score_google = score_google.iloc[novel_new.index]
+        top_10_indices = score_google.iloc[2:11].index
+
+        for i in top_10_indices:
+            recommended_wn.append(novel_new['제목'][i])
+        for j in recommended_wn:
+            topn.append(j)
+    list_topn = list(set(topn))
     list_gidamoo = []
     for i in range(len(novel_new)):
         if novel_new['제목'][i] in list_topn:
@@ -222,59 +205,8 @@ def top_10(index, novel_new):
     if keywords == 1:
         cb += 2
 
-    return df[['index', '제목', '가중평균']].sort_values(by='가중평균', ascending=False)[:2 + cb]['index'].tolist()
+    df[['index', '제목', '가중평균']].sort_values(by='가중평균', ascending=False)[:2 + cb]['index'].tolist()
 
-
-def CB(user, novel_new):
-    global cos
-    cos = np.array(cos)
-    cb_recmm = top_10(user['novelindex'], novel_new)
-    return cb_recmm
-
-
-## 3. CF
-# 예측 평점을 구하는 함수, R(u, i)에 관한 식
-def predict_rating(ratings_arr, item_sim_arr):
-    ratings_pred = ratings_arr.dot(item_sim_arr) / np.array([np.abs(item_sim_arr).sum(axis=1)])
-    return ratings_pred
-
-
-def cf_predict(user, review_new, ID):
-    review_user = pd.concat([user, review_new], axis=0)
-
-    # user rating matrix
-    ratings = review_user.pivot_table('평점', index='ID', columns='novelindex')
-    ratings = ratings.fillna(0)  # 없는 평점은 0으로
-
-    # item dim_df -> 영화간 유사도 계산
-    ratings_T = ratings.transpose()
-    item_sim = cosine_similarity(ratings_T, ratings_T)
-    item_sim_df = pd.DataFrame(data=item_sim, index=ratings.columns, columns=ratings.columns)
-
-    predict = predict_rating(ratings, item_sim_df)
-    unseen_lst = unseen_item(ratings, ID)
-
-    return predict, unseen_lst
-
-
-# 유저가 보지 않은 소설 반환
-def unseen_item(ratings, ID):
-    user_rating = ratings.loc[ID, :]
-    already_seen = user_rating[user_rating > 0].index.tolist()
-
-    novel_list = ratings.columns.tolist()
-    unseen_list = [novel for novel in novel_list if novel not in already_seen]
-
-    return unseen_list
-
-
-# 추천
-def cf_item_recomm(pred_df, ID, unseen_list, top_n=10):
-    recomm_novel = pred_df.loc[ID, unseen_list].sort_values(ascending=False)[:top_n]
-    return recomm_novel
-
-
-def CF(user, review_new, novel_new):
     like = dict_user[0]
     avgrating = dict_user[1]
     totalreview = dict_user[2]
@@ -348,18 +280,31 @@ def CF(user, review_new, novel_new):
     if totalreview == 1:
         predict * np.array(totalreview_scale)
 
-    recomm_novel = cf_item_recomm(predict, ID, unseen_lst, top_n=2 + cf)
+    user_rating = ratings.loc[ID, :]
+    already_seen = user_rating[user_rating > 0].index.tolist()
+
+    novel_list = ratings.columns.tolist()
+    unseen_list = [novel for novel in novel_list if novel not in already_seen]
+
+    review_user = pd.concat([user, review_new], axis=0)
+
+    # user rating matrix
+    ratings = review_user.pivot_table('평점', index='ID', columns='novelindex')
+    ratings = ratings.fillna(0)  # 없는 평점은 0으로
+
+    # item dim_df -> 영화간 유사도 계산
+    ratings_T = ratings.transpose()
+    item_sim = cosine_similarity(ratings_T, ratings_T)
+    item_sim_df = pd.DataFrame(data=item_sim, index=ratings.columns, columns=ratings.columns)
+
+    predict = predict_rating(ratings, item_sim_df)
+    unseen_lst = unseen_item(ratings, ID)
+
+    ratings_pred = ratings_arr.dot(item_sim_arr) / np.array([np.abs(item_sim_arr).sum(axis=1)])
+
+    recomm_novel = recomm_novel = pred_df.loc[ID, unseen_list].sort_values(ascending=False)[:top_n]
     cf_recmm = recomm_novel.index.tolist()
 
-    return cf_recmm
-
-
-def result(request):
-    user = makeUserDF()
-    review_new, novel_new = filtering()
-
-    cb_recmm = CB(user, novel_new)
-    cf_recmm = CF(user, review_new, novel_new)
     recmm_idx = cb_recmm + cf_recmm
 
     recmm_result = []  # 프론트에서 접근 가능한 형태로 변환

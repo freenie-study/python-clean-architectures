@@ -1,3 +1,7 @@
+"""
+공통의 속성을 가진 메서드는 객체지향 패러다임을 적용하여 객체로 묶음.
+굳이 하나의 객체에 종속될 필요가 없거나, 함수로서 더 자유롭게 활용될 수 있는 케이스는 함수형 패러다임을 적용.
+"""
 from django.shortcuts import render, redirect
 from django.views import View
 
@@ -137,6 +141,8 @@ class _Novel(View):
 
 q=_QView()
 novel=_Novel()
+
+----------------------------파일은 분리----------------------------------------
 
 # 추천시스템
 like = q.dict_user[0]
