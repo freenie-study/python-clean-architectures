@@ -48,3 +48,7 @@ if __name__ == '__main__':
     event = Event(name='test_event', start_date='2022-11-01', end_date='2022-11-30')
     coupons = create_coupons(5, event)
     print(coupons)
+
+
+# pydantic id ++
+# CouponGenerator -> pydantic
