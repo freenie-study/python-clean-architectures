@@ -39,13 +39,12 @@ class CouponGenerator:
         return cls.all_coupons_code_list
 
 
-
 def create_coupons(n: int, event: Event) -> Coupon:
     coupons_code_list = CouponGenerator.generate_coupons_code(n)
     return Coupon(event=event, name='test_coupon', codes=coupons_code_list)
 
 
-    
-event = Event(name='test_event', start_date='2022-11-01', end_date='2022-11-30')
-coupons = create_coupons(5, event)
-print(coupons)
+if __name__ == '__main__':
+    event = Event(name='test_event', start_date='2022-11-01', end_date='2022-11-30')
+    coupons = create_coupons(5, event)
+    print(coupons)
